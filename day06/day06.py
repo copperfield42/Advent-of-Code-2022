@@ -68,3 +68,13 @@ print("solution part2", part2(data))
 
 
 
+
+
+
+
+
+
+
+
+
+
