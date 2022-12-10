@@ -3,8 +3,6 @@
 
 from typing import Iterator
 import itertools_recipes as ir
-import re
-from collections.abc import MutableSequence
 import collections
 
 test_input="""
@@ -75,9 +73,9 @@ class Folder(collections.UserList):
 
 
 def process_data(data:str) -> Iterator[tuple[str,...]]:
-    """ """
-    yield from ir.isplit(data.strip().replace("$","$$$\n$").splitlines(),lambda x:"$$$" in x)
-    return
+    """transform the raw data into a procesable form """
+    return ir.isplit(ir.insert_marker(ir.interesting_lines(data),"",lambda x:"$" in x,after=False))
+    
         
 def get_raw_data(path:str="./input.txt") -> str:
     with open(path) as file:
@@ -116,7 +114,7 @@ def build_folder_tree(data, current_folder:Folder=None):
             build_folder_tree(iter_data, next_folder)
     
             
-def walk(folder:Folder):
+def walk(folder:Folder) -> Iterator[Folder]:
     yield folder
     for x in folder:
         if isinstance(x,Folder):
