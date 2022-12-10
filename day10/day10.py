@@ -3,9 +3,8 @@
 
 from typing import Iterator, Iterable, TypeVar
 import itertools_recipes as ir
-#import math
-#from math import copysign
-#import collections
+from functools import partial
+
 T = TypeVar("T")
 
 test_input="""
@@ -158,12 +157,12 @@ noop
 """
 
 
-def process_data(data:str) -> Iterator[int|None]:
+def process_data(data:str|Iterable[str]) -> Iterator[int|None]:
     """transform the raw data into a procesable form"""
-    for line in ir.interesting_lines(data.splitlines()):
+    for line in ir.interesting_lines(data):
         if line == "noop":
             yield None
-        else:"addx"
+        else:#"addx"
             _,n = line.split()
             yield int(n)
     
@@ -172,7 +171,7 @@ def get_raw_data(path:str="./input.txt") -> str:
     with open(path) as file:
         return file.read()
 
-def cathode_ray_tube(instructions:Iterable[int|None]):
+def cathode_ray_tube(instructions:Iterable[int|None]) -> Iterator[int]:
     addx = 1
     for ins in instructions:
         if ins is None:
@@ -185,7 +184,7 @@ def cathode_ray_tube(instructions:Iterable[int|None]):
 
 def sample_signal(iterable:Iterable[T], first:int, interval:int) -> Iterator[T]:
     data = iter(iterable)
-    yield next( x for i,x in enumerate(data,1) if i==first )
+    yield next(  x for i,x in enumerate(data,1) if i==first )
     yield from ( x for i,x in enumerate(data,1) if i%interval==0)
 
 def part1(data:str) -> int:
@@ -193,12 +192,13 @@ def part1(data:str) -> int:
     crt = enumerate(cathode_ray_tube(process_data(data)),1)
     return sum(i*x for i,x in sample_signal(crt,20,40))
 
-def make_line(data:Iterable[int]) -> str:  
-    return "".join( "#" if x-1<=p<=x+1 else "." for p,x in enumerate(data) )
+def make_line(data:Iterable[int], on:str="#", off:str="." ) -> str:  
+    return "".join(on if x-1<=p<=x+1 else off for p,x in enumerate(data) )
 
-def part2(data:str) -> str:
-    """part 2 of the puzzle """    
-    return "\n".join(map(make_line,ir.chunked(cathode_ray_tube(process_data(data)),40)))
+def part2(data:str, on:str="#", off:str="." ) -> str:
+    """part 2 of the puzzle """
+    make_ln = partial(make_line, on=on, off=off)
+    return "\n".join(map(make_ln,ir.chunked(cathode_ray_tube(process_data(data)),40)))
      
     
  
@@ -208,7 +208,7 @@ def test1() -> bool:
     return 13140 == part1(test_input)
 
 def test2() -> bool:
-    return part2(test_input) =="""##..##..##..##..##..##..##..##..##..##..
+    return part2(test_input) == """##..##..##..##..##..##..##..##..##..##..
 ###...###...###...###...###...###...###.
 ####....####....####....####....####....
 #####.....#####.....#####.....#####.....
@@ -222,7 +222,7 @@ data = get_raw_data()
 assert test1(),"fail test 1"
 print("solution part1:", part1(data)) # 
 assert test2(),"fail test 2"
-print("solution part2:", part2(data), sep="\n") # 
+print("solution part2:", part2(data,"██",'░░'), sep="\n") # character sugested by OsipXD on reddit
 
 
 
