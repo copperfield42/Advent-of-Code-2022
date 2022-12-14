@@ -12,6 +12,7 @@ from aoc_recipes import Point
 from dataclasses import dataclass, field
 
 
+
 test_input="""
 498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9
@@ -56,6 +57,7 @@ class Floor(Recta):
         super().__init__(Point(-float("inf"), bottom), Point(float("inf"), bottom))
 
     __iter__ = None
+    __len__ = None
 
     def __contains__(self, other):
         if not isinstance(other, Point):
@@ -73,36 +75,43 @@ direcciones_sand = [
 
 @dataclass
 class Cave:
-    rocks:set[Recta]
+    rocks:set[Point]
     sand_at_rest:set[Point] = field(init=False, default_factory=set)
     sand_origin:Point = Point(500,0)
+    bottom:Floor = None
     _filled:bool = False
 
 
     @cached_property
-    def bottom(self):
-        return 1 + max( max(r.ini.y, r.fin.y) for r in self.rocks )
+    def abyss(self) -> int:
+        return 3 + max( r.y for r in self.rocks )
 
     @property
     def is_filled(self):
         return self._filled
 
+    @property
+    def obstacles(self):
+        if self.bottom is not None:
+            return (self.sand_at_rest, self.rocks, self.bottom)
+        return (self.sand_at_rest, self.rocks)
+
     def one_sand(self):
         if self.is_filled:
             return
         s = self.sand_origin
-        while s.y <= self.bottom:
+        while s.y <= self.abyss:
             move = False
             for d in direcciones_sand:
                 new_s = s+d
-                if new_s in self.sand_at_rest or any( new_s in r for r in self.rocks ):
+                if any(new_s in r for r in self.obstacles):
                     continue
                 s = new_s
                 move = True
                 break
             if not move:
                 break
-        if s.y < self.bottom:
+        if s.y < self.abyss:
             self.sand_at_rest.add(s)
         else:
             self._filled = True
@@ -112,8 +121,13 @@ class Cave:
 
 
 
-
-
+def make_cave(data:str, with_bottom:bool=False) -> Cave:
+    rocks = set(ir.chain.from_iterable(process_data(data)))
+    bottom = None
+    if with_bottom:
+        bottom = Floor(2 + max( r.y for r in rocks ) )
+        
+    return Cave( rocks, bottom = bottom)
 
 
 
@@ -135,7 +149,7 @@ def get_raw_data(path:str="./input.txt") -> str:
 
 def part1(data:str) -> int:
     """part 1 of the puzzle """
-    cave = Cave( set(process_data(data)))
+    cave = make_cave(data)
     while not cave.is_filled:
         cave.one_sand()
         
@@ -145,12 +159,10 @@ def part1(data:str) -> int:
 
 def part2(data:str) -> str:
     """part 2 of the puzzle """
-    cave = Cave( set(process_data(data)))
-    bottom = 2 + max( max(r.ini.y, r.fin.y) for r in cave.rocks )
-    cave.rocks.add(Floor(bottom))
+    cave = make_cave(data,True)
     while not cave.is_filled:
         cave.one_sand()
-        
+    #print("sand:",len(cave.sand_at_rest))
     return len(cave.sand_at_rest)
      
     
