@@ -6,13 +6,7 @@ import itertools_recipes as ir
 from functools import cached_property
 import re
 from dataclasses import dataclass
-import numpy
-import tqdm, sys
-from scipy.signal import convolve2d
-from multiprocessing import Pool
-from functools import partial
 
-progress_bar = tqdm.tqdm_gui if "idlelib" in sys.modules else tqdm.tqdm
 
 
 test_input="""
@@ -45,6 +39,9 @@ def process_data(data:str) -> Iterator[Sensor]:
 def get_raw_data(path:str="./input.txt") -> str:
     with open(path) as file:
         return file.read()
+
+
+#-------------------------------------------------------------------------------
 
 
 def distance_t(point1:complex, point2:complex) -> float:
