@@ -121,7 +121,7 @@ class VerticalChamber:
     wall_left:int = -1
     wall_right:int = 7
     tope:complex = 0j
-    rocas:list[Rock] = field(default_factory = list, init=False, repr=False)
+    master_rock:numpy.ndarray[complex] = field(default_factory = partial(numpy.zeros,0,complex), init=False, repr=False)
     falling_rock:numpy.ndarray[complex] = field(default_factory = partial(numpy.zeros,1,complex), init=False, repr=False)
     
     
@@ -145,15 +145,17 @@ class VerticalChamber:
         self.add_rock( rp )
         if show: print("rock stops");self.pprint()
         
-    def add_rock(self):
-        self.rocas.append( Rock(rp) )
+    def add_rock(self, rock_points:numpy.ndarray[complex]):
+        rp = rock_points
+        self.master_rock = numpy.concatenate( (self.master_rock, rp) )
         self.tope = max(self.tope.imag, rp.imag.max())*1j
         self.falling_rock = numpy.zeros(1,complex)
         
-    def colide(self, points:numpy.ndarray[complex]) -> bool:
+    def colide(self, points:numpy.ndarray[complex]) -> bool|int:
         if (points.real==self.wall_left).any() or (points.real==self.wall_right).any() or (points.imag==0).any():
             return True #colide with a wall or reacheds the floor
-        return any( len(numpy.intersect1d(points, r.points)) for r in reversed(self.rocas))
+        return len(numpy.intersect1d(points, self.master_rock))
+
 
     def pprint(self):
         tope = int(self.tope.imag + (min(5,self.falling_rock.imag.max()) or 5))
@@ -164,7 +166,7 @@ class VerticalChamber:
                 c = '░'
                 if p in self.falling_rock:
                     c = "@"
-                elif any( p in r.points for r in self.rocas):
+                elif p in self.master_rock:
                     c = "#"  
                 print(c,end="")
             print("|")
@@ -172,6 +174,38 @@ class VerticalChamber:
                     
 
 
+class VerticalChamberLite(VerticalChamber):
+    compact_time:int = 1000
+    compact_counter  = 0
+    
+    def add_rock(self, rock_points:numpy.ndarray[complex]):
+        super().add_rock(rock_points)
+        if len(self.master_rock) < self.compact_time:
+            return 
+        return self.compact()
+
+    def compact(self):
+        self.compact_counter += 1
+        master_rock = self.master_rock
+        new_master_rock = []
+        fall_metric = numpy.arange(7) + ( self.tope +1j)
+        line = self.tope
+        for _ in range(int(self.tope.imag)):
+            if not len(fall_metric):
+                break
+            fall_metric = fall_metric -1j
+            rock_line = master_rock[master_rock.imag==line.imag] 
+            inter = numpy.intersect1d(fall_metric,rock_line)
+            new_master_rock.append( rock_line )
+            #if len(inter):
+                #print("inter")
+                #print(inter)
+                #print("fall_metric")
+                #print(fall_metric)
+            fall_metric = numpy.setdiff1d(fall_metric,inter) 
+            line -= 1j
+        self.master_rock = numpy.concatenate( new_master_rock )
+             
 
 
 
