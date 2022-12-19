@@ -29,8 +29,8 @@ def test() -> bool:
 
 class Simulator:
     
-    def __init__(self, data:str, show=True):
-        self.chamber = VerticalChamber()
+    def __init__(self, data:str, show=True, chamber_class=VerticalChamber):
+        self.chamber = chamber_class()
         self.jets = Jets(data)
         self.ijets = iter(self.jets)
         self.irocks = it.cycle(Rocas)

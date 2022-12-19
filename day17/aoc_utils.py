@@ -16,15 +16,14 @@ test_input="""
 
 
 
-def process_data(data:str) -> Iterator[tuple[Literal[-1,1],int]]:
+def process_data(data:str) -> Iterator[Literal[-1,1]]:
     """transform the raw data into a procesable form"""
-    for c,v in ir.groupby(data):
-        n = ir.ilen(v)
+    for c in data:
         match c:
             case "<":
-                yield (-1,n)
+                yield -1
             case ">":
-                yield (1,n)
+                yield 1
                 
         
     pass
@@ -95,7 +94,7 @@ class Jets:
     
     def __init__(self, patterns:str):
         """patterns is a string containing only "<" or ">" characters"""
-        self.patron = tuple(process_data(patterns))
+        self.patron = tuple( (k,ir.ilen(v)) for k,v in ir.groupby(process_data(patterns)))
 
     def __iter__(self) -> Iterator[Literal[-1,1]]:
         return ir.chain.from_iterable( ir.repeat(v,n) for v,n in ir.cycle(self.patron))
@@ -206,7 +205,9 @@ class VerticalChamberLite(VerticalChamber):
             line -= 1j
         self.master_rock = numpy.concatenate( new_master_rock )
              
-
+    def estate(self):
+        return len(self.master_rock)
+        
 
 
 
