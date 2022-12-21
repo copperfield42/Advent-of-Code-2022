@@ -1,7 +1,7 @@
 #https://adventofcode.com/2022/day/20
 from __future__ import annotations
 
-from typing import Iterator, Iterable
+from typing import Iterator, Iterable, MutableSequence
 import itertools_recipes as ir
 from collections import deque
 
@@ -17,13 +17,8 @@ test_input="""
 """
 
 
-
-def delete_index(d:deque, index:int):
-    d.rotate(-index)
-    d.popleft()
-    d.rotate(index)
-    
-def scramble(mask:Iterable[Any], data:deque[tuple[int,Any]]) -> deque[tuple[int,Any]]:
+  
+def scramble(mask:Iterable[Any], data:MutableSequence[tuple[int,Any]]) -> MutableSequence[tuple[int,Any]]:
     """mix up the data deque according to the mask in-place
        the data must be a enumeration of the mask"""
     N = len(data)-1
@@ -33,8 +28,8 @@ def scramble(mask:Iterable[Any], data:deque[tuple[int,Any]]) -> deque[tuple[int,
         if not x:
             continue
         p = result.index( item )
+        del result[p]
         new = (p+x)%N
-        delete_index(result,p)
         result.insert(new,item)
     return result        
 
@@ -61,4 +56,3 @@ def get_raw_data(path:str="./input.txt") -> str:
         return file.read()
 
 
-#-------------------------------------------------------------------------------

@@ -5,7 +5,7 @@ from aoc_utils import test_input, get_raw_data, process_data
 from aoc_utils import decrypt
 
 
-def main(data:str, key=811589153, mix=10, check=(1000,2000,3000)) -> int:
+def main(data:str) -> int:
     """part 2 of the puzzle """
     return decrypt(process_data(data), key=811589153, mix=10)
 
