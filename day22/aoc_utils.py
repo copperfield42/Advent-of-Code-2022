@@ -1,7 +1,7 @@
 #https://adventofcode.com/2022/day/22
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Callable
 import itertools_recipes as ir
 from aoc_recipes import Point
 import numpy
@@ -55,7 +55,7 @@ def point_score(position, direction) -> int:
     return 1000*position.x + 4*position.y + FACING[direction]
 
 
-def simulate(path:Iterable[int|str], tablero:numpy.ndarray[int,int], warping_rule:Callable[[Point,Point,numpy.ndarray[int,int]],Point], show=False) -> int:
+def simulate(path:Iterable[int|str], tablero:numpy.ndarray[int,int], move_rule:Callable[[Point,Point,numpy.ndarray[int,int]],tuple[Point,Point]], show=False) -> int:
     ini  = MPoint(1,numpy.where(tablero[1]==1)[0].min())
     move = MPoint(0,1)
     pos  = ini
@@ -64,13 +64,14 @@ def simulate(path:Iterable[int|str], tablero:numpy.ndarray[int,int], warping_rul
         if show: print(x,end=" ")
         if isinstance(x,int):
             for _ in range(x):
-                pos_ = pos
-                while tablero[ (new:=warping_rule(pos_, move, tablero)) ]==0:
-                    pos_ = new
-                if tablero[new] == 1:
-                    pos = new
-                elif tablero[new] == -1:
-                    break
+                new, new_move = move_rule(pos, move, tablero)
+                match tablero[new]:
+                    case 1:
+                        pos, move = new, new_move
+                    case -1:
+                        break
+                    case _:
+                        raise RuntimeError("Unexpected value for tablero")
         else:
             move = move*DIRECCION[x]
         if show: print(pos,move)
