@@ -20,19 +20,19 @@ class MPoint(Point):
     def __repr__(self):
         return f"{type(self).__name__}(row={self.x}, column={self.y})"
 
-DIRECCION = {
+CHANGE_DIRECCION = {
     "R":-1j,
     "L":1j,
     }
 
-FACING = {#x=row y=column
-    MPoint(0,1):0, #>
-    MPoint(1,0):1, #v
-    MPoint(0,-1):2,#<
-    MPoint(-1,0):3,#^
-
-
+DIRECCION = {#x=row y=column
+    MPoint(0,1):">",
+    MPoint(1,0):"v",
+    MPoint(0,-1):"<",
+    MPoint(-1,0):"^",
 }
+DIRECCION.update( [(v,k) for k,v in DIRECCION.items()] )
+
 
 test_input="""
         ...#
@@ -51,18 +51,19 @@ test_input="""
 10R5L5R10L4R5L5
 """
 
-def point_score(position, direction) -> int:
-    return 1000*position.x + 4*position.y + FACING[direction]
+def point_score(position:Point, direction:Point) -> int:
+    return 1000*position.x + 4*position.y + ">v<^".index(DIRECCION[direction])
 
 
 def simulate(path:Iterable[int|str], tablero:numpy.ndarray[int,int], move_rule:Callable[[Point,Point,numpy.ndarray[int,int]],tuple[Point,Point]], show=False) -> int:
     ini  = MPoint(1,numpy.where(tablero[1]==1)[0].min())
-    move = MPoint(0,1)
+    move = DIRECCION[">"]
     pos  = ini
     print(f"inicial {pos=} {move=} {tablero.shape=}")
     for x in path:
-        if show: print(x,end=" ")
+        if show: print(x,DIRECCION[move],end=" ")
         if isinstance(x,int):
+            if show: print(pos,end="->")
             for _ in range(x):
                 new, new_move = move_rule(pos, move, tablero)
                 match tablero[new]:
@@ -72,9 +73,10 @@ def simulate(path:Iterable[int|str], tablero:numpy.ndarray[int,int], move_rule:C
                         break
                     case _:
                         raise RuntimeError("Unexpected value for tablero")
+            if show: print(pos,end=" ")
         else:
-            move = move*DIRECCION[x]
-        if show: print(pos,move)
+            move = move*CHANGE_DIRECCION[x]
+        if show: print(DIRECCION[move])
     print(f"final {pos=} {move=}")
     return point_score(pos, move)
 
